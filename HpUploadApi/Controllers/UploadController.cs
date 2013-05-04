@@ -1,10 +1,12 @@
-﻿using System.IO;
+﻿using System.Collections.Specialized;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
+using System.Web.UI.WebControls;
 using NLog;
 
 namespace HpUploadApi.Controllers
@@ -33,16 +35,30 @@ namespace HpUploadApi.Controllers
 
                 // Read the form data and return an async task.
                 Logger.Info("api upload: before await");
-            
+
+                //byte[] result = Request.Content.ReadAsByteArrayAsync().Result;
+                //NameValueCollection readAsFormDataAsync = Request.Content.ReadAsFormDataAsync().Result;
+                //foreach(var nv in readAsFormDataAsync)
+                //{
+                        
+                //}
+
                 await Request.Content.ReadAsMultipartAsync(provider);
 
                 Logger.Info("api upload: after await");
             
                 // This illustrates how to get the form data.
+                string tkey;
+                string siteCode;
+                string fileName;
                 foreach (var key in provider.FormData.AllKeys)
                 {
                     foreach (var val in provider.FormData.GetValues(key))
                     {
+                        if (key == "key")
+                            tkey = val;
+                        if (key == "siteCode")
+                            siteCode = val;
                         sb.Append(string.Format("{0}: {1}\n", key, val));
                     }
                 }
@@ -52,11 +68,13 @@ namespace HpUploadApi.Controllers
                 foreach (var file in provider.FileData)
                 {
                     var fileInfo = new FileInfo(file.LocalFileName);
+                    fileName = fileInfo.FullName;
                     sb.Append(string.Format("Uploaded file: {0} ({1} bytes)\n", fileInfo.Name, fileInfo.Length));
                 }
                 Logger.Info("api upload: after foreach file");
                 return new HttpResponseMessage()
                 {
+                    StatusCode = HttpStatusCode.Accepted,
                     Content = new StringContent(sb.ToString())
                 };
                 

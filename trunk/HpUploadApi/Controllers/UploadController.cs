@@ -18,36 +18,23 @@ namespace HpUploadApi.Controllers
         public async Task<HttpResponseMessage> PostFormData()
         {
             Logger.Info("Starting api upload");
-            // Check if the request contains multipart/form-data.
             if (!Request.Content.IsMimeMultipartContent())
             {
-                Logger.Info("api upload: IsMimeMultipartContent is false");
-            
                 throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
             }
 
             string root = HttpContext.Current.Server.MapPath("~/App_Data");
             var provider = new CustomMultipartFormDataStreamProvider(root);
-            Logger.Info("after CustomMultipartFormDataStreamProvider instanced: " + provider.ToString());
+            
             try
             {
                 var sb = new StringBuilder(); // Holds the response body
 
                 // Read the form data and return an async task.
                 Logger.Info("api upload: before await");
-
-                //byte[] result = Request.Content.ReadAsByteArrayAsync().Result;
-                //NameValueCollection readAsFormDataAsync = Request.Content.ReadAsFormDataAsync().Result;
-                //foreach(var nv in readAsFormDataAsync)
-                //{
-                        
-                //}
-
                 await Request.Content.ReadAsMultipartAsync(provider);
-
-                Logger.Info("api upload: after await");
-            
-                // This illustrates how to get the form data.
+                
+                //get the form data.
                 string tkey;
                 string siteCode;
                 string fileName;
@@ -64,7 +51,7 @@ namespace HpUploadApi.Controllers
                 }
 
                 Logger.Info("api upload: before foreach file");
-                // This illustrates how to get the file names for uploaded files.
+                // get the file names for uploaded files.
                 foreach (var file in provider.FileData)
                 {
                     var fileInfo = new FileInfo(file.LocalFileName);

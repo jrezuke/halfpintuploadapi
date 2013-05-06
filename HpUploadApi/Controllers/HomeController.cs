@@ -15,6 +15,7 @@ namespace HpUploadApi.Controllers
             return View();
         }
 
+        [HttpPost()]
         public ActionResult ChecksUpload(HttpPostedFileBase file)
         {
             try

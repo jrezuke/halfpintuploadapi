@@ -1,12 +1,10 @@
-﻿using System.Collections.Specialized;
-using System.IO;
+﻿using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
-using System.Web.UI.WebControls;
+using HpUploadApi.Utility;
 using NLog;
 
 namespace HpUploadApi.Controllers
@@ -18,51 +16,50 @@ namespace HpUploadApi.Controllers
         public async Task<HttpResponseMessage> PostFormData()
         {
             Logger.Info("Starting api upload");
+            
             if (!Request.Content.IsMimeMultipartContent())
             {
                 throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
             }
 
-            string root = HttpContext.Current.Server.MapPath("~/App_Data");
-            var provider = new CustomMultipartFormDataStreamProvider(root);
+            //get the query strings
+            var qsCol = Request.RequestUri.ParseQueryString();
+
+            //save the files in this folder
+            string folder = HttpContext.Current.Server.MapPath("~/App_Data");
+            var provider = new CustomMultipartFormDataStreamProvider(folder);
             
             try
             {
-                var sb = new StringBuilder(); // Holds the response body
-
-                // Read the form data and return an async task.
-                Logger.Info("api upload: before await");
+                //this gets the file stream form the request and saves to the folder
                 await Request.Content.ReadAsMultipartAsync(provider);
-                
-                //get the form data.
-                string tkey;
-                string siteCode;
-                string fileName;
-                foreach (var key in provider.FormData.AllKeys)
-                {
-                    foreach (var val in provider.FormData.GetValues(key))
-                    {
-                        if (key == "key")
-                            tkey = val;
-                        if (key == "siteCode")
-                            siteCode = val;
-                        sb.Append(string.Format("{0}: {1}\n", key, val));
-                    }
-                }
+                Logger.Info("api upload: after ReadAsMultipartAsync");
 
-                Logger.Info("api upload: before foreach file");
-                // get the file names for uploaded files.
-                foreach (var file in provider.FileData)
+                //move the files to the appropriate locations
+                if (!Utils.VerifyKey(qsCol["key"], qsCol["fileName"], qsCol["siteCode"]))
                 {
-                    var fileInfo = new FileInfo(file.LocalFileName);
-                    fileName = fileInfo.FullName;
-                    sb.Append(string.Format("Uploaded file: {0} ({1} bytes)\n", fileInfo.Name, fileInfo.Length));
+                    Logger.Info("ChecksUpload - bad key - file name: " + qsCol["fileName"] + ", key: " + qsCol["key"]);
+                    return new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.NotAcceptable,
+                        Content = new StringContent("Bad key")
+                    };
                 }
+                
+                // get the file info for uploaded file
+                var file = provider.FileData[0];
+                var fi = new FileInfo(file.LocalFileName);
+                string movetopath = "";
+                
+                fi.MoveTo(@"C:\HalfPintArchive\" + fi.Name);
+                
+                //var fileName = fileInfo.FullName;
+                
                 Logger.Info("api upload: after foreach file");
-                return new HttpResponseMessage()
+                return new HttpResponseMessage
                 {
-                    StatusCode = HttpStatusCode.Accepted,
-                    Content = new StringContent(sb.ToString())
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent("OK")
                 };
                 
             }
@@ -76,6 +73,7 @@ namespace HpUploadApi.Controllers
             }
         }
     }
+    
     public class CustomMultipartFormDataStreamProvider : MultipartFormDataStreamProvider
     {
         public CustomMultipartFormDataStreamProvider(string path)
@@ -88,33 +86,6 @@ namespace HpUploadApi.Controllers
             var name = !string.IsNullOrWhiteSpace(headers.ContentDisposition.FileName) ? headers.ContentDisposition.FileName : "NoName";
             return name.Replace("\"", string.Empty); //this is here because Chrome submits files in quotation marks which get treated as part of the filename and get escaped
         }
-
-        public override Stream GetStream(HttpContent parent, System.Net.Http.Headers.HttpContentHeaders headers)
-        {
-            
-            return base.GetStream(parent, headers);
-        }
     }
-
-    //public class CustomMultipartFormDataStreamProvider : MultipartFormDataStreamProvider
-    //{
-    //    public CustomMultipartFormDataStreamProvider(string path)
-    //        : base(path)
-    //    {
-    //    }
-
-    //    public override string GetLocalFileName(System.Net.Http.Headers.HttpContentHeaders headers)
-    //    {
-    //        //validate headers.ContentDisposition.FileName as it will have the name+extension
-    //        //then do something (throw error, continue with base or implement own logic)
-    //    }
-
-    //    public override Stream GetStream(HttpContent parent, System.Net.Http.Headers.HttpContentHeaders headers)
-    //    {
-    //        //validate headers.ContentDisposition.FileName as it will have the name+extension
-
-    //        //then do something (throw error, continue with base or implement own logic)
-    //    }
-    //}
 }
 

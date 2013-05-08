@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using System.Configuration;
+using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
@@ -25,8 +27,13 @@ namespace HpUploadApi.Controllers
             //get the query strings
             var qsCol = Request.RequestUri.ParseQueryString();
 
+            var savePath = GetSavePath(qsCol["siteCode"], qsCol["fileName"]);
+
+            if (!Directory.Exists(savePath))
+                Directory.CreateDirectory(savePath);
+
             //save the files in this folder
-            string folder = HttpContext.Current.Server.MapPath("~/App_Data");
+            string folder = savePath; //HttpContext.Current.Server.MapPath("~/App_Data");
             var provider = new CustomMultipartFormDataStreamProvider(folder);
             
             try
@@ -51,7 +58,7 @@ namespace HpUploadApi.Controllers
                 var fi = new FileInfo(file.LocalFileName);
                 string movetopath = "";
                 
-                fi.MoveTo(@"C:\HalfPintArchive\" + fi.Name);
+                //fi.MoveTo(@"C:\HalfPintArchive\" + fi.Name);
                 
                 //var fileName = fileInfo.FullName;
                 
@@ -71,6 +78,26 @@ namespace HpUploadApi.Controllers
                 Logger.Error("exception:",e);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e);
             }
+        }
+
+        private string GetSavePath(string siteCode, string fileName)
+        {
+            var sb = new StringBuilder();
+            string path = string.Empty;
+
+            if (fileName.EndsWith(".gif"))
+            {
+                path = ConfigurationManager.AppSettings["ChartPath"];
+
+            }
+            else
+            {
+                path = ConfigurationManager.AppSettings["ChecksUploadPath"];
+                
+            }
+            path = Path.Combine(path, siteCode);
+
+            return path;
         }
     }
     

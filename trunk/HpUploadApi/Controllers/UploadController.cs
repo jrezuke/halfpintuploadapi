@@ -18,19 +18,30 @@ namespace HpUploadApi.Controllers
         public async Task<HttpResponseMessage> PostFormData()
         {
             Logger.Info("Starting api upload");
-            
+
             if (!Request.Content.IsMimeMultipartContent())
             {
+                Logger.Info("not IsMimeMultipartContent");
                 throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
             }
 
+            
             //get the query strings
+            Logger.Info("Before ParseQueryString:");
+
             var qsCol = Request.RequestUri.ParseQueryString();
+            Logger.Info("qsCol.Count: " + qsCol.Count);
+            Logger.Info("After ParseQueryString: ");
 
             var savePath = GetSavePath(qsCol["siteCode"], qsCol["fileName"]);
 
+            Logger.Info("Savepath:" + savePath);
             if (!Directory.Exists(savePath))
+            {
+                Logger.Info("Creating savepath");
                 Directory.CreateDirectory(savePath);
+            }
+                
 
             //save the files in this folder
             string folder = savePath; //HttpContext.Current.Server.MapPath("~/App_Data");
@@ -38,6 +49,7 @@ namespace HpUploadApi.Controllers
             
             try
             {
+                Logger.Info("Before  ReadAsMultipartAsync");
                 //this gets the file stream form the request and saves to the folder
                 await Request.Content.ReadAsMultipartAsync(provider);
                 Logger.Info("api upload: after ReadAsMultipartAsync");

@@ -2,9 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Http;
 using HpUploadApi.Utility;
 using NLog;
@@ -27,21 +25,26 @@ namespace HpUploadApi.Controllers
 
             
             //get the query strings
-            Logger.Info("Before ParseQueryString:");
-
             var qsCol = Request.RequestUri.ParseQueryString();
-            Logger.Info("qsCol.Count: " + qsCol.Count);
-            Logger.Info("After ParseQueryString: ");
+
+            //Check key - if bad return
+            if (!Utils.VerifyKey(qsCol["key"], qsCol["fileName"], qsCol["siteCode"]))
+            {
+                Logger.Info("ChecksUpload - bad key - file name: " + qsCol["fileName"] + ", key: " + qsCol["key"]);
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.NotAcceptable,
+                    Content = new StringContent("Bad key")
+                };
+            }
 
             var savePath = GetSavePath(qsCol["siteCode"], qsCol["fileName"]);
-
             Logger.Info("Savepath:" + savePath);
             if (!Directory.Exists(savePath))
             {
                 Logger.Info("Creating savepath");
                 Directory.CreateDirectory(savePath);
             }
-                
 
             //save the files in this folder
             string folder = savePath; //HttpContext.Current.Server.MapPath("~/App_Data");
@@ -53,28 +56,12 @@ namespace HpUploadApi.Controllers
                 //this gets the file stream form the request and saves to the folder
                 await Request.Content.ReadAsMultipartAsync(provider);
                 Logger.Info("api upload: after ReadAsMultipartAsync");
-
-                //move the files to the appropriate locations
-                if (!Utils.VerifyKey(qsCol["key"], qsCol["fileName"], qsCol["siteCode"]))
-                {
-                    Logger.Info("ChecksUpload - bad key - file name: " + qsCol["fileName"] + ", key: " + qsCol["key"]);
-                    return new HttpResponseMessage
-                    {
-                        StatusCode = HttpStatusCode.NotAcceptable,
-                        Content = new StringContent("Bad key")
-                    };
-                }
+                
                 
                 // get the file info for uploaded file
-                var file = provider.FileData[0];
-                var fi = new FileInfo(file.LocalFileName);
-                string movetopath = "";
+                //var file = provider.FileData[0];
+                //var fi = new FileInfo(file.LocalFileName);
                 
-                //fi.MoveTo(@"C:\HalfPintArchive\" + fi.Name);
-                
-                //var fileName = fileInfo.FullName;
-                
-                Logger.Info("api upload: after foreach file");
                 return new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,
@@ -92,21 +79,10 @@ namespace HpUploadApi.Controllers
             }
         }
 
-        private string GetSavePath(string siteCode, string fileName)
+        private static string GetSavePath(string siteCode, string fileName)
         {
-            var sb = new StringBuilder();
-            string path = string.Empty;
 
-            if (fileName.EndsWith(".gif"))
-            {
-                path = ConfigurationManager.AppSettings["ChartPath"];
-
-            }
-            else
-            {
-                path = ConfigurationManager.AppSettings["ChecksUploadPath"];
-                
-            }
+            var path = fileName.EndsWith(".gif") ? ConfigurationManager.AppSettings["ChartPath"] : ConfigurationManager.AppSettings["ChecksUploadPath"];
             path = Path.Combine(path, siteCode);
 
             return path;

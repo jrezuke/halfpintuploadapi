@@ -39,6 +39,8 @@ namespace HpUploadApi.Controllers
             }
 
             var savePath = GetSavePath(qsCol["siteCode"], qsCol["fileName"]);
+            Logger.Info("FileName:" + qsCol["fileName"]);
+            
             Logger.Info("Savepath:" + savePath);
             if (!Directory.Exists(savePath))
             {

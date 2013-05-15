@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
-using HpUploadApi.Utility;
 using NLog;
 
 namespace HpUploadApi.Controllers
@@ -26,21 +25,27 @@ namespace HpUploadApi.Controllers
             //get the query strings
             var qsCol = Request.RequestUri.ParseQueryString();
 
-            var folder = "app_data";
-            var provider = new CustomMultipartFormDataStreamProvider(folder);
+            var siteCode = qsCol["siteCode"];
+            var computerName = qsCol["computerName"];
+            var fileName = qsCol["fileName"];
+            Logger.Info("siteCode:" + siteCode + ", computerName: " + computerName + ", fileName:" + fileName);
+
+            string novanetUploadPath = ConfigurationManager.AppSettings["NovanetUploadPath"];
+            string novanetFullUploadPath = Path.Combine(novanetUploadPath, siteCode, computerName);
+
+            if (! Directory.Exists(novanetFullUploadPath))
+            {
+                Directory.CreateDirectory(novanetFullUploadPath);
+                Logger.Info("Created folder for: " + novanetFullUploadPath);
+            }
+
+            var provider = new CustomMultipartFormDataStreamProvider(novanetFullUploadPath);
 
             try
             {
-                Logger.Info("Before  ReadAsMultipartAsync");
                 //this gets the file stream form the request and saves to the folder
                 await Request.Content.ReadAsMultipartAsync(provider);
-                Logger.Info("api upload: after ReadAsMultipartAsync");
-
-
-                // get the file info for uploaded file
-                //var file = provider.FileData[0];
-                //var fi = new FileInfo(file.LocalFileName);
-
+                
                 return new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,

@@ -54,11 +54,8 @@ namespace HpUploadApi.Controllers
             
             try
             {
-                Logger.Info("Before  ReadAsMultipartAsync");
-                //this gets the file stream form the request and saves to the folder
+               //this gets the file stream form the request and saves to the folder
                 await Request.Content.ReadAsMultipartAsync(provider);
-                Logger.Info("api upload: after ReadAsMultipartAsync");
-                
                 
                 // get the file info for uploaded file
                 //var file = provider.FileData[0];

@@ -15,7 +15,7 @@ namespace HpUploadApi.Controllers
 
         public async Task<HttpResponseMessage> PostFormData()
         {
-            Logger.Info("Starting api upload");
+            Logger.Info("Starting checks upload");
 
             if (!Request.Content.IsMimeMultipartContent())
             {

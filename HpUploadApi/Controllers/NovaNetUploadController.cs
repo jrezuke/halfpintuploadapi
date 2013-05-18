@@ -39,6 +39,16 @@ namespace HpUploadApi.Controllers
                 Logger.Info("Created folder for: " + novanetFullUploadPath);
             }
 
+            string filePathName = Path.Combine(novanetFullUploadPath, fileName);
+            var fi = new FileInfo(filePathName);
+            if (fi.Exists)
+            {
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.Accepted,
+                    Content = new StringContent("Duplicate")
+                };
+            }
             var provider = new CustomMultipartFormDataStreamProvider(novanetFullUploadPath);
 
             try
@@ -58,8 +68,8 @@ namespace HpUploadApi.Controllers
                 Logger.Info("api upload exception: " + e.Message);
                 if (e.InnerException != null)
                     Logger.Info("api upload inner exception: " + e.InnerException.Message);
-                Logger.Error("exception:", e);
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e);
+                Logger.Error("exception:", e.Message);
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e.Message);
             }
         }
     }

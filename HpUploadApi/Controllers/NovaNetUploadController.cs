@@ -14,7 +14,7 @@ namespace HpUploadApi.Controllers
 
         public async Task<HttpResponseMessage> PostFormData()
         {
-            Logger.Info("Starting novanet archives upload");
+            //Logger.Info("Starting novanet archives upload");
 
             if (!Request.Content.IsMimeMultipartContent())
             {
@@ -28,7 +28,7 @@ namespace HpUploadApi.Controllers
             var siteCode = qsCol["siteCode"];
             var computerName = qsCol["computerName"];
             var fileName = qsCol["fileName"];
-            Logger.Info("siteCode:" + siteCode + ", computerName: " + computerName + ", fileName:" + fileName);
+            //Logger.Info("siteCode:" + siteCode + ", computerName: " + computerName + ", fileName:" + fileName);
 
             string novanetUploadPath = ConfigurationManager.AppSettings["NovanetUploadPath"];
             string novanetFullUploadPath = Path.Combine(novanetUploadPath, siteCode, computerName);
@@ -43,7 +43,7 @@ namespace HpUploadApi.Controllers
             var fi = new FileInfo(filePathName);
             if (fi.Exists)
             {
-                Logger.Info("File already exists on the server");
+                //Logger.Info("File already exists on the server");
                 return new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.Conflict,
@@ -57,7 +57,7 @@ namespace HpUploadApi.Controllers
                 //this gets the file stream form the request and saves to the folder
                 await Request.Content.ReadAsMultipartAsync(provider);
 
-                Logger.Info("File uploaded to the server");
+                //Logger.Info("File uploaded to the server");
                 return new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,

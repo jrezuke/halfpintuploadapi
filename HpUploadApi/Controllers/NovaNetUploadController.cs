@@ -43,9 +43,10 @@ namespace HpUploadApi.Controllers
             var fi = new FileInfo(filePathName);
             if (fi.Exists)
             {
+                Logger.Info("File already exists on the server");
                 return new HttpResponseMessage
                 {
-                    StatusCode = HttpStatusCode.Accepted,
+                    StatusCode = HttpStatusCode.Conflict,
                     Content = new StringContent("Duplicate")
                 };
             }
@@ -55,7 +56,8 @@ namespace HpUploadApi.Controllers
             {
                 //this gets the file stream form the request and saves to the folder
                 await Request.Content.ReadAsMultipartAsync(provider);
-                
+
+                Logger.Info("File uploaded to the server");
                 return new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,

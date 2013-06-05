@@ -15,7 +15,7 @@ namespace HpUploadApi.Controllers
 
         public async Task<HttpResponseMessage> PostFormData()
         {
-            Logger.Info("Starting checks upload");
+            //Logger.Info("Starting checks upload");
 
             if (!Request.Content.IsMimeMultipartContent())
             {
@@ -39,9 +39,9 @@ namespace HpUploadApi.Controllers
             }
 
             var savePath = GetSavePath(qsCol["siteCode"], qsCol["fileName"]);
-            Logger.Info("FileName:" + qsCol["fileName"]);
+            Logger.Info("Checks upload - file name:" + qsCol["fileName"]);
             
-            Logger.Info("Savepath:" + savePath);
+            //Logger.Info("Savepath:" + savePath);
             if (!Directory.Exists(savePath))
             {
                 Logger.Info("Creating savepath");

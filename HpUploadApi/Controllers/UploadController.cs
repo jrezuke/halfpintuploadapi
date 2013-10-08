@@ -27,14 +27,44 @@ namespace HpUploadApi.Controllers
             //get the query strings
             var qsCol = Request.RequestUri.ParseQueryString();
 
+            var fileName = qsCol["fileName"];
+            var siteCode = qsCol["siteCode"];
+            var key = qsCol["key"];
+
             //Check key - if bad return
-            if (!Utils.VerifyKey(qsCol["key"], qsCol["fileName"], qsCol["siteCode"]))
+            if (!Utils.VerifyKey(key, fileName, siteCode))
             {
-                Logger.Info("ChecksUpload - bad key - file name: " + qsCol["fileName"] + ", key: " + qsCol["key"]);
+                Logger.Info("ChecksUpload - bad key - file name: " + fileName + ", key: " + key );
                 return new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.NotAcceptable,
                     Content = new StringContent("Bad key")
+                };
+            }
+
+            int retVal = Utils.IsStudyCleared(fileName);
+            string msg = string.Empty;
+
+            switch (retVal)
+            {
+                case -1:
+                    msg = "There was an error for checking if study id was cleared.";
+                    break;
+                case 1:
+                    msg = "Study id is cleared.";
+                    break;
+                case 2:
+                    msg = "Test studies are not uploaded.";
+                    break;
+            }
+
+            if (retVal != 0)
+            {
+                Logger.Info("ChecksUpload - " + msg + " - file name: " + qsCol["fileName"] + ", key: " + qsCol["key"]);
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.NotAcceptable,
+                    Content = new StringContent(msg)
                 };
             }
 

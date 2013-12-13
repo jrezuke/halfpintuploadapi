@@ -22,7 +22,6 @@ namespace HpUploadApi.Controllers
                 Logger.Info("not IsMimeMultipartContent");
                 throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
             }
-
             
             //get the query strings
             var qsCol = Request.RequestUri.ParseQueryString();

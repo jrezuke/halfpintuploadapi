@@ -8,7 +8,7 @@ using NLog;
 
 namespace HpUploadApi.Controllers
 {
-    public class NovaNetUploadController : ApiController
+    public class LogUploadController : ApiController
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
@@ -28,28 +28,28 @@ namespace HpUploadApi.Controllers
             var siteCode = qsCol["siteCode"];
             var computerName = qsCol["computerName"];
             var fileName = qsCol["fileName"];
-            
-            string novanetUploadPath = ConfigurationManager.AppSettings["NovanetUploadPath"];
-            string novanetFullUploadPath = Path.Combine(novanetUploadPath, siteCode, computerName);
 
-            if (! Directory.Exists(novanetFullUploadPath))
+            string logUploadPath = ConfigurationManager.AppSettings["LogUploadPath"];
+            string logFullUploadPath = Path.Combine(logUploadPath, siteCode, computerName);
+
+            if (!Directory.Exists(logFullUploadPath))
             {
-                Directory.CreateDirectory(novanetFullUploadPath);
-                Logger.Info("Created folder for: " + novanetFullUploadPath);
+                Directory.CreateDirectory(logFullUploadPath);
+                Logger.Info("Created folder for: " + logFullUploadPath);
             }
 
-            string filePathName = Path.Combine(novanetFullUploadPath, fileName);
-            var fi = new FileInfo(filePathName);
-            if (fi.Exists)
-            {
-                //Logger.Info("File already exists on the server");
-                return new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.Conflict,
-                    Content = new StringContent("Duplicate")
-                };
-            }
-            var provider = new CustomMultipartFormDataStreamProvider(novanetFullUploadPath);
+            //string filePathName = Path.Combine(logFullUploadPath, fileName);
+            //var fi = new FileInfo(filePathName);
+            //if (fi.Exists)
+            //{
+            //    //Logger.Info("File already exists on the server");
+            //    return new HttpResponseMessage
+            //    {
+            //        StatusCode = HttpStatusCode.Conflict,
+            //        Content = new StringContent("Duplicate")
+            //    };
+            //}
+            var provider = new CustomMultipartFormDataStreamProvider(logFullUploadPath);
 
             try
             {

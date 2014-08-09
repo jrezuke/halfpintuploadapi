@@ -1,4 +1,5 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -17,92 +18,99 @@ namespace HpUploadApi.Controllers
         {
             Logger.Info("Starting checks upload");
 
-            if (!Request.Content.IsMimeMultipartContent())
-            {
-                Logger.Info("not IsMimeMultipartContent");
-                throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
-            }
-            
-            //get the query strings
-            var qsCol = Request.RequestUri.ParseQueryString();
-
-            var fileName = qsCol["fileName"];
-            var siteCode = qsCol["siteCode"];
-            var key = qsCol["key"];
-
-            //Check key - if bad return
-            if (!Utils.VerifyKey(key, fileName, siteCode))
-            {
-                Logger.Info("ChecksUpload - bad key - file name: " + fileName + ", key: " + key );
-                return new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.NotAcceptable,
-                    Content = new StringContent("Bad key")
-                };
-            }
-
-            int retVal = Utils.IsStudyCleared(fileName);
-            string msg = string.Empty;
-
-            switch (retVal)
-            {
-                case -1:
-                    msg = "There was an error for checking if study id was cleared.";
-                    break;
-                case 1:
-                    msg = "Study id is cleared.";
-                    break;
-                case 2:
-                    msg = "Test studies are not uploaded.";
-                    break;
-            }
-
-            if (retVal != 0)
-            {
-                Logger.Info("ChecksUpload - " + msg + " - file name: " + qsCol["fileName"] + ", key: " + qsCol["key"]);
-                return new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.NotAcceptable,
-                    Content = new StringContent(msg)
-                };
-            }
-
-            var savePath = GetSavePath(qsCol["siteCode"], qsCol["fileName"]);
-            Logger.Info("Checks upload - file name:" + qsCol["fileName"]);
-            
-            //Logger.Info("Savepath:" + savePath);
-            if (!Directory.Exists(savePath))
-            {
-                Logger.Info("Creating savepath");
-                Directory.CreateDirectory(savePath);
-            }
-
-            //save the files in this folder
-            string folder = savePath; //HttpContext.Current.Server.MapPath("~/App_Data");
-            var provider = new CustomMultipartFormDataStreamProvider(folder);
-            
             try
             {
-               //this gets the file stream form the request and saves to the folder
+
+
+                if (!Request.Content.IsMimeMultipartContent())
+                {
+                    Logger.Info("not IsMimeMultipartContent");
+                    return new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.NotAcceptable,
+                        Content = new StringContent("Bad key")
+                    };
+                }
+
+                //get the query strings
+                var qsCol = Request.RequestUri.ParseQueryString();
+
+                var fileName = qsCol["fileName"];
+                var siteCode = qsCol["siteCode"];
+                //var key = qsCol["key"];
+
+                //Check key - if bad return
+                //if (!Utils.VerifyKey(key, fileName, siteCode))
+                //{
+                //    Logger.Info("ChecksUpload - bad key - file name: " + fileName + ", key: " + key );
+                //    return new HttpResponseMessage
+                //    {
+                //        StatusCode = HttpStatusCode.NotAcceptable,
+                //        Content = new StringContent("Bad key")
+                //    };
+                //}
+
+                int retVal = Utils.IsStudyCleared(fileName);
+                string msg = string.Empty;
+
+                switch (retVal)
+                {
+                    case -1:
+                        msg = "There was an error for checking if study id was cleared.";
+                        break;
+                    case 1:
+                        msg = "Study id is cleared.";
+                        break;
+                    case 2:
+                        msg = "Test studies are not uploaded.";
+                        break;
+                }
+
+                if (retVal != 0)
+                {
+                    Logger.Info("ChecksUpload - " + msg + " - file name: " + qsCol["fileName"] + ", key: " + qsCol["key"]);
+                    return new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.NotAcceptable,
+                        Content = new StringContent(msg)
+                    };
+                }
+
+                var savePath = GetSavePath(qsCol["siteCode"], qsCol["fileName"]);
+                Logger.Info("Checks upload - file name:" + qsCol["fileName"]);
+
+                //Logger.Info("Savepath:" + savePath);
+                if (!Directory.Exists(savePath))
+                {
+                    Logger.Info("Creating savepath");
+                    Directory.CreateDirectory(savePath);
+                }
+
+                //save the files in this folder
+                string folder = savePath; //HttpContext.Current.Server.MapPath("~/App_Data");
+                var provider = new CustomMultipartFormDataStreamProvider(folder);
+
+
+                //this gets the file stream form the request and saves to the folder
                 await Request.Content.ReadAsMultipartAsync(provider);
-                
+
                 // get the file info for uploaded file
                 //var file = provider.FileData[0];
                 //var fi = new FileInfo(file.LocalFileName);
-                
+
                 return new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,
                     Content = new StringContent("OK")
                 };
-                
+
             }
             catch (System.Exception e)
             {
                 Logger.Info("api upload exception: " + e.Message);
-                if(e.InnerException != null)
+                if (e.InnerException != null)
                     Logger.Info("api upload inner exception: " + e.InnerException.Message);
-                Logger.Error("exception:",e);
+                Logger.Error("exception:", e);
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e);
             }
         }
@@ -116,7 +124,7 @@ namespace HpUploadApi.Controllers
             return path;
         }
     }
-    
+
     public class CustomMultipartFormDataStreamProvider : MultipartFormDataStreamProvider
     {
         public CustomMultipartFormDataStreamProvider(string path)
